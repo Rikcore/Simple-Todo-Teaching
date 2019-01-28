@@ -1,6 +1,8 @@
 package com.waxym.simpletodo;
 
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -10,9 +12,10 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
-
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
@@ -31,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
         listView = findViewById(R.id.listView);
         floatingActionButton = findViewById(R.id.floatingActionButton);
 
-        toDoList = new ArrayList<>();
+        toDoList = retrieveList();
         arrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, toDoList);
         listView.setAdapter(arrayAdapter);
 
@@ -62,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int id) {
                         String items = input.getText().toString();
                         toDoList.add(items);
+                        saveList();
                         arrayAdapter.notifyDataSetChanged();
                     }
                 });
@@ -72,6 +76,25 @@ public class MainActivity extends AppCompatActivity {
 
     private void removeItem(int position){
         toDoList.remove(position);
+        saveList();
         arrayAdapter.notifyDataSetChanged();
+    }
+
+    private void saveList(){
+        Gson gson = new Gson();
+        String myListInJson = gson.toJson(toDoList);
+        SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("PREF", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString("toDoList", myListInJson);
+        editor.apply();
+    }
+
+    private ArrayList<String> retrieveList(){
+        Gson gson = new Gson();
+        SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("PREF", Context.MODE_PRIVATE);
+        String myListInJson = sharedPref.getString("toDoList", null);
+        Type type = new TypeToken<ArrayList<String>>() {}.getType();
+        ArrayList<String> list = gson.fromJson(myListInJson, type);
+        return list != null ? list : new ArrayList<String>();
     }
 }
